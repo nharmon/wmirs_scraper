@@ -1,41 +1,60 @@
-# Mission Alert Agent for Civil Air Patrol's WMIRS Application
-# Written By: Nathan Harmon, nharmon@gatech.edu
+# Nathan Harmon, nharmon@gatech.edu
+# https://github.com/nharmon/wmirs_scraper
 # 
-# This agent monitors WMIRS for new missions and then sends a GroupMe message.
+# Mission Alert Agent
+# Every 30 seconds the agent will check WMIRS for new missions. If it finds 
+# a new "actual" mission (denoted by 'M' in the mission number), it will 
+# trigger message via GroupMe.
 # 
-# Python modules required:
-#   - Beautiful Soup (https://pypi.python.org/pypi/beautifulsoup4)
-#   - Mechanize (https://pypi.python.org/pypi/mechanize/)
-#   - Six (https://pypi.python.org/pypi/six)
-# 
-import datetime
+import time
+import urllib
+import urllib2
 from wmirs import WMIRS
 
 ### Settings ###
-
-# The URL for the WMIRS Mission Search/Display
-data_url = "https://www.capnhq.gov/WMIRS/Default.aspx"
-
-# The eServices login webform
-login_url = "https://www.capnhq.gov/CAP.eServices.Web/Default.aspx"
 
 # eServices username and password
 username = "Valid CAPID"
 password = "eServices Password for CAPID above"
 
-# GroupMe API Key
-gmapikey = "Supplied by Groupme"
+# GroupMe Bot ID (obtain from https://dev.groupme.com/bots)
+groupme_botid = "Bot ID"
+
+### End of Settings ###
+
+
+def sendGroupmeMsg(botid, msg):
+    """Sends the given message to GroupMe
+    
+    :param botid (str): Bot ID from GroupMe Developer's API
+    :param msg (str): Message to be sent
+    :returns (bool): True if message send successfully, otherwise False
+    """
+    groupme_url = "https://api.groupme.com/v3/bots/post"
+    header = {
+                "User-Agent": "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)"
+             }
+    data = {
+              "text": msg,
+              "bot_id": botid
+           }
+    body = urllib.urlencode(data)
+    req = urllib2.Request(groupme_url, body, header)
+    resp = urllib2.urlopen(req)
+    if resp.code == 202:
+        return True
+    
+    return False
 
 
 ### Main ###
 
 if __name__ == '__main__':
-    wmirs = WMIRS()
+    wmirs = WMIRS(username, password)
     while True:
         for mission in wmirs.getNewMissions():
-            if mission[3] == 'M':
-                pass
-                print "%s - New Mission: %s" % \
-                      (datetime.datetime.utcnow(), mission)
+            if mission[3:4] == 'M':
+                msg = "New Actual Mission in WMIRS: %s" % mission
+                sendGroupmeMsg(groupme_botid, msg)
 
         time.sleep(30)
