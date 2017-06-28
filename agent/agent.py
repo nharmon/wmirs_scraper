@@ -4,7 +4,7 @@
 # Mission Alert Agent
 # Every 30 seconds the agent will check WMIRS for new missions. If it finds 
 # a new "actual" mission (denoted by 'M' in the mission number), it will 
-# trigger message via GroupMe.
+# trigger a message via GroupMe.
 # 
 import time
 import urllib

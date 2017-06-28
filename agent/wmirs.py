@@ -1,8 +1,8 @@
+#!/usr/bin/env python
+# WMIRS Access Module
 # Nathan Harmon, nharmon@gatech.edu
 # https://github.com/nharmon/wmirs_scraper
 #
-# WMIRS Access Module
-# 
 # Python modules required:
 #   - Beautiful Soup (https://pypi.python.org/pypi/beautifulsoup4)
 #   - Mechanize (https://pypi.python.org/pypi/mechanize/)
@@ -38,8 +38,9 @@ class WMIRS:
         self.password = password
         self.data_url = data_url
         self.login_url = login_url
-        self.browser = mechanize.Browser()
+        self.initBrowser()
         self.loginEservices()
+        self.missions = set()
         self.missions = self.getMissions()
     
     def getMissions(self):
@@ -47,14 +48,15 @@ class WMIRS:
         
         :return missions (set): Missions numbers
         """
-        resp = self.browser.open(self.data_url)
-        soup = bs4.BeautifulSoup(resp.read(), "html5lib")
         missions = set()
         try:
+            resp = self.browser.open(self.data_url)
+            soup = bs4.BeautifulSoup(resp.read(), "html5lib")
             missions_table = soup.find('table', id='gvMissions')
         except:
+            self.initBrowser()
             self.loginEservices()
-            return missions
+            return self.missions
         
         for row in missions_table.findAll('tr'):
             for col in row.findAll('td')[:1]:
@@ -72,6 +74,16 @@ class WMIRS:
         new_missions = cur_missions.difference(self.missions)
         self.missions = cur_missions
         return new_missions
+    
+    def initBrowser(self):
+        """Initialize mechanize Browser instance
+        """
+        self.browser = mechanize.Browser()
+        self.browser.set_handle_robots(False)
+        self.browser.set_handle_equiv(False)
+        self.browser.set_handle_refresh(False)
+        self.browser.addheaders = [('User-agent', 'Firefox')]
+        return True
     
     def loginEservices(self):
         """Login to eServices
