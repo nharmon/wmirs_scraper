@@ -1,7 +1,8 @@
+#!/usr/bin/env python
+# Mission Alert Agent
 # Nathan Harmon, nharmon@gatech.edu
 # https://github.com/nharmon/wmirs_scraper
 # 
-# Mission Alert Agent
 # Every 30 seconds the agent will check WMIRS for new missions. If it finds 
 # a new "actual" mission (denoted by 'M' in the mission number), it will 
 # trigger a message via GroupMe.
@@ -9,6 +10,7 @@
 import time
 import urllib
 import urllib2
+from groupme import sendGroupmeMsg
 from wmirs import WMIRS
 
 ### Settings ###
@@ -21,31 +23,6 @@ password = "eServices Password for CAPID above"
 groupme_botid = "Bot ID"
 
 ### End of Settings ###
-
-
-def sendGroupmeMsg(botid, msg):
-    """Sends the given message to GroupMe
-    
-    :param botid (str): Bot ID from GroupMe Developer's API
-    :param msg (str): Message to be sent
-    :returns (bool): True if message send successfully, otherwise False
-    """
-    groupme_url = "https://api.groupme.com/v3/bots/post"
-    header = {
-                "User-Agent": "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)"
-             }
-    data = {
-              "text": msg,
-              "bot_id": botid
-           }
-    body = urllib.urlencode(data)
-    req = urllib2.Request(groupme_url, body, header)
-    resp = urllib2.urlopen(req)
-    if resp.code == 202:
-        return True
-    
-    return False
-
 
 ### Main ###
 
