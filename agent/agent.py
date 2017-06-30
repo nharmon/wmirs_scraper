@@ -3,9 +3,8 @@
 # Nathan Harmon, nharmon@gatech.edu
 # https://github.com/nharmon/wmirs_scraper
 # 
-# Every 30 seconds the agent will check WMIRS for new missions. If it finds 
-# a new "actual" mission (denoted by 'M' in the mission number), it will 
-# trigger a message via GroupMe.
+# Periodically check WMIRS for new REDCAP missions and trigger GroupMe message
+# when one is found.
 # 
 import time
 import urllib
@@ -14,6 +13,9 @@ from groupme import sendGroupmeMsg
 from wmirs import WMIRS
 
 ### Settings ###
+
+# Interval to wait between checks (in seconds)
+refresh_interval = 60
 
 # eServices username and password
 username = "Valid CAPID"
@@ -30,8 +32,11 @@ if __name__ == '__main__':
     wmirs = WMIRS(username, password)
     while True:
         for mission in wmirs.getNewMissions():
-            if mission[3:4] == 'M':
-                msg = "New Actual Mission in WMIRS: %s" % mission
+            if mission[2:5] == '-M-':
+                print("New mission (%s)" % mission)
+                msg = ("New REDCAP Mission: %s. Please " % mission) + \
+                       "reply with availability only. Instructions " + \
+                       "will follow if you are needed."
                 sendGroupmeMsg(groupme_botid, msg)
 
-        time.sleep(30)
+        time.sleep(refresh_interval)
