@@ -1,60 +1,45 @@
+#!/usr/bin/env python
+# Mission Alert Agent
 # Nathan Harmon, nharmon@gatech.edu
 # https://github.com/nharmon/wmirs_scraper
 # 
-# Mission Alert Agent
-# Every 30 seconds the agent will check WMIRS for new missions. If it finds 
-# a new "actual" mission (denoted by 'M' in the mission number), it will 
-# trigger a message via GroupMe.
+# Periodically check WMIRS for new REDCAP missions and trigger GroupMe message
+# when one is found.
 # 
+import ConfigParser
+import sys
 import time
-import urllib
-import urllib2
+from groupme import sendGroupmeMsg
 from wmirs import WMIRS
-
-### Settings ###
-
-# eServices username and password
-username = "Valid CAPID"
-password = "eServices Password for CAPID above"
-
-# GroupMe Bot ID (obtain from https://dev.groupme.com/bots)
-groupme_botid = "Bot ID"
-
-### End of Settings ###
-
-
-def sendGroupmeMsg(botid, msg):
-    """Sends the given message to GroupMe
-    
-    :param botid (str): Bot ID from GroupMe Developer's API
-    :param msg (str): Message to be sent
-    :returns (bool): True if message send successfully, otherwise False
-    """
-    groupme_url = "https://api.groupme.com/v3/bots/post"
-    header = {
-                "User-Agent": "Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)"
-             }
-    data = {
-              "text": msg,
-              "bot_id": botid
-           }
-    body = urllib.urlencode(data)
-    req = urllib2.Request(groupme_url, body, header)
-    resp = urllib2.urlopen(req)
-    if resp.code == 202:
-        return True
-    
-    return False
-
 
 ### Main ###
 
 if __name__ == '__main__':
-    wmirs = WMIRS(username, password)
+    # Allow an alternate configuration file be specified.
+    if len(sys.argv) > 1:
+        configfile = sys.argv[1]
+    else:
+        configfile = "agent.conf"
+    
+    # Parse the configuration file
+    Config = ConfigParser.ConfigParser()
+    Config.read(configfile)
+    refresh_interval = int(Config.get("agent","refresh-interval"))
+    wuser = Config.get("wmirs","username")
+    wpass = Config.get("wmirs","password")
+    groupmeid = Config.get("groupme","botid")
+    
+    # Setup WMIRS connection
+    wmirs = WMIRS(wuser, wpass)
+    
+    # Start checking for new missions
     while True:
         for mission in wmirs.getNewMissions():
-            if mission[3:4] == 'M':
-                msg = "New Actual Mission in WMIRS: %s" % mission
+            if mission[2:5] == '-M-':
+                print("New mission (%s)" % mission)
+                msg = ("New REDCAP Mission: %s. Please " % mission) + \ 
+                       "reply with availability only. Instructions " + \ 
+                       "will follow if activated."
                 sendGroupmeMsg(groupme_botid, msg)
 
-        time.sleep(30)
+        time.sleep(refresh_interval)

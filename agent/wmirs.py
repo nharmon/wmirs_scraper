@@ -58,6 +58,9 @@ class WMIRS:
             self.loginEservices()
             return self.missions
         
+        if missions_table == None or len(missions) == 0:
+            return self.missions
+        
         for row in missions_table.findAll('tr'):
             for col in row.findAll('td')[:1]:
                 for atag in col.findAll('a')[:1]:
@@ -88,9 +91,13 @@ class WMIRS:
     def loginEservices(self):
         """Login to eServices
         """
-        self.browser.open(self.login_url)
-        self.browser.select_form('form1')
-        self.browser.form['Login1$UserName'] = self.username
-        self.browser.form['Login1$Password'] = self.password
-        self.browser.submit()
+        try:
+            self.browser.open(self.login_url)
+            self.browser.select_form('form1')
+            self.browser.form['Login1$UserName'] = self.username
+            self.browser.form['Login1$Password'] = self.password
+            self.browser.submit()
+        except:
+            return False
+        
         return True
