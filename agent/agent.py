@@ -7,6 +7,7 @@
 # when one is found.
 # 
 import ConfigParser
+import os
 import sys
 import time
 from groupme import sendGroupmeMsg
@@ -29,6 +30,10 @@ if __name__ == '__main__':
     wpass = Config.get("wmirs","password")
     groupmeid = Config.get("groupme","botid")
     
+    # Write the current PID to agent.pid
+    with open(Config.get("agent","pidfile"), 'w') as pidfile:
+        pidfile.write(str(os.getpid()))
+    
     # Setup WMIRS connection
     wmirs = WMIRS(wuser, wpass)
     
@@ -37,9 +42,9 @@ if __name__ == '__main__':
         for mission in wmirs.getNewMissions():
             if mission[2:5] == '-M-':
                 print("New mission (%s)" % mission)
-                msg = ("New REDCAP Mission: %s. Please " % mission) + \ 
-                       "reply with availability only. Instructions " + \ 
-                       "will follow if activated."
-                sendGroupmeMsg(groupme_botid, msg)
+                msg = "New REDCAP Mission: %s. Please reply with " + \
+                      "availability only. Instructions will follow " + \
+                      "if activated."
+                sendGroupmeMsg(groupmeid, msg % mission)
 
         time.sleep(refresh_interval)
